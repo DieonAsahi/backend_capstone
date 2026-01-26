@@ -1,0 +1,21 @@
+# Ignore rahasia dan environment
+venv/
+.env
+.env/
+__pycache__/
+*.pyc
+
+# VSCode & OS sampah
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Data Dinamis (Jangan push file upload-an user ke Git)
+static/uploads/*
+!static/uploads/.gitkeep
+static/temp/*
+!static/temp/.gitkeep
+
+# Model ML yang ukurannya raksasa (Biasanya di-push lewat LFS atau diunduh manual)
+*.h5
+*.pkl

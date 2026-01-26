@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: transparent;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.3/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi-live2d-display/dist/cubism4.min.js"></script>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const MODEL_PATH = '/static/model/chitose/runtime/chitose.model3.json';
+        let model;
+
+        const app = new PIXI.Application({
+            view: document.getElementById('canvas'),
+            autoStart: true,
+            resizeTo: window,
+            backgroundAlpha: 0,
+            antialias: false, // UBAH KE FALSE agar lebih ringan
+            preserveDrawingBuffer: false, // UBAH KE FALSE
+            resolution: 1 // PAKSA KE 1, jangan gunakan window.devicePixelRatio
+        });
+        async function init() {
+            try {
+                model = await PIXI.live2d.Live2DModel.from(MODEL_PATH);
+                app.stage.addChild(model);
+
+                // 1. Perbesar skala sedikit agar karakter terlihat lebih jelas (opsional, dari 0.8 ke 0.9)
+                const scale = Math.min(window.innerWidth / model.width, window.innerHeight / model.height) * 0.9;
+                model.scale.set(scale);
+
+                // 2. x di tengah layar
+                model.x = window.innerWidth / 2;
+
+                // 3. Atur y di paling bawah layar
+                model.y = window.innerHeight;
+
+                // 4. Atur anchor: x di tengah (0.5), y di paling bawah (1.0)
+                // Ini memastikan titik tumpu karakter ada di kakinya, bukan di perut/tengah
+                model.anchor.set(0.5, 1.0);
+
+            } catch (e) {
+                console.error("Gagal load model:", e);
+            }
+        }
+        init();
+
+        // FUNGSI INI YANG DIPANGGIL OLEH FLUTTER
+        window.changeMotion = function (name) {
+            if (model) {
+                console.log("Menjalankan gerakan:", name);
+                try {
+                    model.motion(name);
+                } catch (e) {
+                    model.motion('Idle'); // Fallback jika nama motion salah
+                }
+            }
+        };
+    </script>
+</body>
+
+</html>

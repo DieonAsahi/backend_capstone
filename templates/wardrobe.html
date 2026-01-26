@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Lemari User{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fa-solid fa-heart text-danger"></i> Data Lemari User</h3>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Foto</th>
+                        <th>Nama Barang</th>
+                        <th>Pemilik</th>
+                        <th>Tanggal Simpan</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in wardrobe %}
+                    <tr>
+                        <td>
+                            <img src="{{ item.image_url }}" width="50" height="50" class="rounded border" style="object-fit: cover;">
+                        </td>
+                        <td>
+                            <span class="fw-bold">{{ item.item_name }}</span><br>
+                            <span class="badge bg-{{ 'warning' if item.type == 'wishlist' else 'success' }}">
+                                {{ item.type|default('Owned') }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px; font-size: 12px;">
+                                    {{ item.username[0]|upper }}
+                                </div>
+                                <small>{{ item.username }}</small>
+                            </div>
+                        </td>
+                        <td class="text-muted small">{{ item.added_at }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Belum ada data lemari.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

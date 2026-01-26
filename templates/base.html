@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swipeer Admin</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --primary: #ff7043; --secondary: #2c3e50; --light: #f3f4f6; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--light); overflow-x: hidden; }
+        
+        /* --- SIDEBAR DESKTOP --- */
+        .sidebar { 
+            width: 260px; height: 100vh; background: var(--secondary); color: white; 
+            position: fixed; top: 0; left: 0; padding: 20px; 
+            transition: all 0.3s; z-index: 1000; 
+        }
+        .sidebar h2 { color: var(--primary); font-weight: 700; margin-bottom: 40px; text-align: center; }
+        .sidebar ul { list-style: none; padding: 0; }
+        .sidebar a { color: #bdc3c7; text-decoration: none; display: flex; align-items: center; padding: 12px 20px; border-radius: 10px; margin-bottom: 8px; transition: 0.3s; }
+        .sidebar a:hover, .sidebar a.active { background: rgba(255,255,255,0.1); color: white; }
+        .sidebar i { margin-right: 15px; width: 20px; text-align: center; }
+
+        /* --- CONTENT AREA --- */
+        .main-content { 
+            margin-left: 260px; 
+            padding: 30px; 
+            min-height: 100vh; 
+            transition: all 0.3s; 
+        }
+
+        /* --- MOBILE TOGGLE BUTTON (Hidden di Desktop) --- */
+        .mobile-nav-toggle { display: none; position: fixed; top: 15px; right: 15px; z-index: 1100; }
+
+        /* --- RESPONSIVE UNTUK HP (Layar < 768px) --- */
+        @media (max-width: 768px) {
+            /* 1. Sembunyikan Sidebar ke kiri layar */
+            .sidebar { left: -260px; }
+            
+            /* 2. Jika sidebar aktif (tombol ditekan), munculkan lagi */
+            .sidebar.active { left: 0; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
+            
+            /* 3. Konten jadi full width (margin hilang) */
+            .main-content { margin-left: 0; padding: 20px; width: 100%; }
+            
+            /* 4. Munculkan tombol hamburger */
+            .mobile-nav-toggle { display: block; }
+
+            /* 5. Overlay Gelap saat menu terbuka */
+            .overlay {
+                display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.5); z-index: 900;
+            }
+            .overlay.active { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="btn btn-primary mobile-nav-toggle rounded-circle shadow" onclick="toggleSidebar()">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="overlay" onclick="toggleSidebar()"></div>
+
+    <div class="sidebar" id="sidebar">
+        <h2>Stylo</h2>
+        <ul>
+            <li><a href="/admin/dashboard" class="{{ 'active' if request.path == '/admin/dashboard' }}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="/admin/products" class="{{ 'active' if request.path == '/admin/products' }}"><i class="fa-solid fa-shirt"></i> Kelola Produk</a></li>
+            <li><a href="/admin/users" class="{{ 'active' if request.path == '/admin/users' }}"><i class="fa-solid fa-users"></i> Data User</a></li>
+            <!-- <li><a href="/admin/wardrobe" class="{{ 'active' if request.path.startswith('/admin/wardrobe') }}"><i class="fa-solid fa-door-open"></i> Lemari User</a></li> -->
+            <li><a href="/admin/feedback" class="{{ 'active' if request.path == '/admin/feedback' }}"><i class="fa-solid fa-comments"></i> Feedback</a></li>
+            <li><a href="/admin/shared-outfits" class="{{ 'active' if request.path == '/admin/shared-outfits' }}"><i class="fa-solid fa-camera-retro"></i> Shared OOTD</a></li>
+            
+            <li><a href="/admin/logout" class="text-danger mt-5"><i class="fa-solid fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-info alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        // Fungsi untuk Buka/Tutup Sidebar di HP
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.overlay');
+            const icon = document.querySelector('.mobile-nav-toggle i');
+
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+
+            // Ganti icon garis tiga jadi silang (X)
+            if (sidebar.classList.contains('active')) {
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark');
+            } else {
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            }
+        }
+    </script>
+</body>
+</html>

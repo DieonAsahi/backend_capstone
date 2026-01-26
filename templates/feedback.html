@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Feedback User{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fa-solid fa-comments text-primary"></i> Masukan Pengguna</h3>
+    <div class="bg-white px-3 py-2 rounded shadow-sm">
+        <span class="fw-bold text-dark">{{ feedbacks|length }}</span> <span class="text-muted small">Pesan Masuk</span>
+    </div>
+</div>
+
+<div class="row">
+    {% for item in feedbacks %}
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 45px; height: 45px; font-weight: bold; font-size: 1.2rem;">
+                            {{ item.username[0]|upper }}
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-dark">{{ item.username }}</h6>
+                            <small class="text-muted" style="font-size: 0.8rem;">{{ item.email }}</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-light text-secondary border">{{ item.created_at }}</span>
+                </div>
+
+                <div class="mb-3 text-warning">
+                    {% for i in range(item.rating) %}
+                        <i class="fa-solid fa-star"></i>
+                    {% endfor %}
+                    {% for i in range(5 - item.rating) %}
+                        <i class="fa-regular fa-star"></i>
+                    {% endfor %}
+                </div>
+
+                <div class="bg-light p-3 rounded mb-3 position-relative">
+                    <i class="fa-solid fa-quote-left text-secondary position-absolute top-0 start-0 m-2 opacity-25"></i>
+                    <p class="card-text fst-italic text-secondary mb-0 ps-3">"{{ item.message }}"</p>
+                </div>
+
+                <div class="text-end">
+                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="hapusFeedback('{{ item.id }}')">
+                        <i class="fa-solid fa-trash me-1"></i> Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <div class="text-muted display-1 mb-3"><i class="fa-regular fa-envelope-open"></i></div>
+        <h5 class="text-muted">Belum ada feedback masuk.</h5>
+        <p class="text-muted small">Feedback dari aplikasi mobile akan muncul di sini.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    function hapusFeedback(id) {
+        Swal.fire({
+            title: 'Hapus feedback ini?',
+            text: "Data akan dihapus permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Ya, Hapus'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/admin/feedback/delete/' + id, {method: 'POST'})
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status) {
+                        Swal.fire('Terhapus!', '', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Gagal', 'Terjadi kesalahan.', 'error');
+                    }
+                });
+            }
+        })
+    }
+</script>
+{% endblock %}

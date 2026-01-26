@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Lemari {{ user.username }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="/admin/wardrobe" class="text-decoration-none text-muted small"><i class="fa-solid fa-arrow-left"></i> Kembali ke Daftar User</a>
+        <h3 class="fw-bold mt-1">Lemari: <span class="text-primary">{{ user.username }}</span></h3>
+        <p class="text-muted mb-0 small">{{ user.email }}</p>
+    </div>
+    <div class="bg-white px-3 py-2 rounded shadow-sm">
+        <span class="fw-bold text-dark">{{ items|length }}</span> <span class="text-muted small">Barang Tersimpan</span>
+    </div>
+</div>
+
+{% if items %}
+<div class="row">
+    {% for item in items %}
+    <div class="col-md-3 col-6 mb-4">
+        <div class="card h-100 shadow-sm border-0 position-relative">
+            <span class="position-absolute top-0 start-0 badge {{ 'bg-warning text-dark' if item.type == 'wishlist' else 'bg-success' }} m-2 shadow-sm">
+                {{ item.type|default('owned')|capitalize }}
+            </span>
+            
+            <img src="{{ item.image_url }}" class="card-img-top" style="height: 200px; object-fit: cover; border-top-left-radius: 10px; border-top-right-radius: 10px;" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
+            
+            <div class="card-body p-3">
+                <h6 class="card-title fw-bold text-truncate">{{ item.item_name }}</h6>
+                
+                <p class="text-primary small mb-2 fw-bold">
+                    Rp {{ item.price if item.price else '0' }}
+                </p>
+
+                <div class="d-grid gap-2">
+                    {% if item.link %}
+                    <a href="{{ item.link }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa-solid fa-link"></i> Link
+                    </a>
+                    {% endif %}
+                    
+                    <button class="btn btn-sm btn-outline-danger" onclick="hapusItem('{{ item.id }}')">
+                        <i class="fa-solid fa-trash"></i> Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <div class="text-muted display-1"><i class="fa-solid fa-box-open"></i></div>
+    <p class="lead mt-3">Lemari user ini masih kosong.</p>
+</div>
+{% endif %}
+
+<script>
+    function hapusItem(id) {
+        Swal.fire({
+            title: 'Hapus item ini?',
+            text: "Item akan hilang dari lemari user.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Ya, Hapus'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/admin/wardrobe/delete/' + id, {method: 'POST'})
+                .then(res => res.json())
+                .then(data => {
+                    if(data.status) {
+                        Swal.fire('Terhapus!', '', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Gagal', 'Terjadi kesalahan sistem', 'error');
+                    }
+                });
+            }
+        })
+    }
+</script>
+{% endblock %}

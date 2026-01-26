@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Kelola Produk Online{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold"><i class="fa-solid fa-shirt text-success"></i> Katalog Produk Online</h3>
+    <div>
+        <form action="/admin/products/import_csv" method="POST" enctype="multipart/form-data"
+            class="d-inline-flex align-items-center">
+            <input type="file" name="file_csv" class="form-control form-control-sm me-2" accept=".csv" required
+                style="width: 200px;">
+            <button type="submit" class="btn btn-warning btn-sm me-2"><i class="fa-solid fa-file-csv"></i> Import
+                CSV</button>
+        </form>
+        <button id="btnBulkDelete" class="btn btn-danger btn-sm me-2 d-none" onclick="hapusMassal()"><i
+                class="fa-solid fa-trash"></i> Hapus (<span id="countSelected">0</span>)</button>
+        <button class="btn btn-success btn-sm" onclick="resetForm()" data-bs-toggle="modal"
+            data-bs-target="#modalProduk"><i class="fa-solid fa-plus"></i> Tambah Manual</button>
+    </div>
+</div>
+
+<div class="card shadow border-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="tabelProduk">
+            <thead class="table-light">
+                <tr>
+                    <th width="40" class="text-center"><input type="checkbox" id="checkAll" onchange="toggleAll(this)">
+                    </th>
+                    <th width="70">Gambar</th>
+                    <th>Nama Produk</th>
+                    <th>Jenis (Type)</th>
+                    <th>Gaya (Style)</th>
+                    <th>Warna</th>
+                    <th>Harga</th>
+                    <th class="text-end">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="modalProduk" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form id="produkForm" class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalTitle">Tambah Produk</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="action" id="formAction" value="create">
+                <input type="hidden" name="id" id="produkId">
+                <input type="hidden" name="foto_lama" id="fotoLama">
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Nama Produk</label>
+                        <input type="text" name="item_name" id="itemName" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Brand / Sumber</label>
+                        <input type="text" name="brand" id="brand" class="form-control">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Jenis (Type)</label>
+                        <input type="text" name="category" id="category" class="form-control"
+                            placeholder="Cth: shirt, dress, pants" required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Gaya (Style)</label>
+                        <select name="category_text" id="categoryText" class="form-select">
+                            <option value="Casual">Casual</option>
+                            <option value="Formal">Formal</option>
+                            <option value="Vintage">Vintage</option>
+                            <option value="Streetwear">Streetwear</option>
+                            <option value="Sporty">Sporty</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Warna Utama</label>
+                        <input type="text" name="color" id="color" class="form-control" placeholder="Cth: Hitam, Navy">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Harga (Rp)</label>
+                        <input type="number" name="price" id="price" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Gender</label>
+                        <select name="gender" id="gender" class="form-select">
+                            <option value="unisex">Unisex</option>
+                            <option value="male">Pria</option>
+                            <option value="female">Wanita</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Link Pembelian</label>
+                        <input type="text" name="purchase_link" id="link" class="form-control">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Gambar Produk</label>
+                    <input type="file" name="gambar_file" class="form-control" accept="image/*">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let produkModal;
+    document.addEventListener("DOMContentLoaded", function () {
+        produkModal = new bootstrap.Modal(document.getElementById('modalProduk'));
+        loadProduk();
+    });
+
+    async function loadProduk() {
+        let res = await fetch('/api/products');
+        let result = await res.json();
+        let tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        if (result.status && result.data.length > 0) {
+            result.data.forEach(item => {
+                let harga = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(item.price);
+
+                // TAMPILKAN KEDUA KATEGORI
+                let typeBadge = item.category ? `<span class="badge bg-primary">${item.category}</span>` : '-';
+                let styleBadge = item.category_text ? `<span class="badge bg-info text-dark">${item.category_text}</span>` : '-';
+                let colorBadge = item.color ? `<span class="badge border text-dark bg-light">${item.color}</span>` : '-';
+
+                let row = `<tr>
+                    <td class="text-center"><input type="checkbox" class="form-check-input check-item" value="${item.catalog_item_id}" onchange="updateBtnDelete()"></td>
+                    <td><img src="${item.image_url}" class="rounded" width="50" height="50" style="object-fit:cover" onerror="this.src='https://via.placeholder.com/50'"></td>
+                    <td><div class="fw-bold text-truncate" style="max-width: 200px;">${item.item_name}</div><small class="text-muted">${item.brand}</small></td>
+                    <td>${typeBadge}</td>
+                    <td>${styleBadge}</td>
+                    <td>${colorBadge}</td>
+                    <td class="fw-bold text-success">${harga}</td>
+                    <td class="text-end"><button class="btn btn-sm btn-warning text-white" onclick='editProduk(${JSON.stringify(item)})'><i class="fa-solid fa-pen"></i></button></td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        } else { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Belum ada data</td></tr>'; }
+    }
+
+    document.getElementById('produkForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        let formData = new FormData(e.target);
+        let res = await fetch('/api/products', { method: 'POST', body: formData });
+        let result = await res.json();
+        if (result.status) { produkModal.hide(); Swal.fire('Berhasil', 'Data disimpan', 'success'); loadProduk(); }
+        else { Swal.fire('Gagal', result.message, 'error'); }
+    });
+
+    function editProduk(item) {
+        resetForm();
+        document.getElementById('modalTitle').innerText = "Edit Produk";
+        document.getElementById('formAction').value = "update";
+        document.getElementById('produkId').value = item.catalog_item_id;
+        document.getElementById('fotoLama').value = item.image_url;
+        document.getElementById('itemName').value = item.item_name;
+        document.getElementById('brand').value = item.brand;
+
+        // ISI INPUTAN TERPISAH
+        document.getElementById('category').value = item.category || '';          // Jenis (cth: Shirt)
+        document.getElementById('categoryText').value = item.category_text || 'Casual'; // Style (cth: Casual)
+
+        document.getElementById('color').value = item.color || '';
+        document.getElementById('price').value = item.price;
+        document.getElementById('gender').value = item.gender;
+        document.getElementById('link').value = item.purchase_link;
+        produkModal.show();
+    }
+
+    function resetForm() {
+        document.getElementById('produkForm').reset();
+        document.getElementById('modalTitle').innerText = "Tambah Produk";
+        document.getElementById('formAction').value = "create";
+        document.getElementById('produkId').value = "";
+    }
+
+    function toggleAll(source) { document.querySelectorAll('.check-item').forEach(cb => cb.checked = source.checked); updateBtnDelete(); }
+    function updateBtnDelete() {
+        let count = document.querySelectorAll('.check-item:checked').length;
+        let btn = document.getElementById('btnBulkDelete');
+        document.getElementById('countSelected').innerText = count;
+        if (count > 0) btn.classList.remove('d-none'); else btn.classList.add('d-none');
+    }
+    async function hapusMassal() {
+        let ids = Array.from(document.querySelectorAll('.check-item:checked')).map(cb => cb.value);
+        if (ids.length === 0) return;
+        let confirm = await Swal.fire({ title: `Hapus ${ids.length} item?`, icon: 'warning', showCancelButton: true, confirmButtonText: 'Hapus', confirmButtonColor: '#d33' });
+        if (confirm.isConfirmed) {
+            await fetch('/api/products/bulk_delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: ids }) });
+            loadProduk();
+            document.getElementById('checkAll').checked = false;
+            updateBtnDelete();
+        }
+    }
+</script>
+{% endblock %}

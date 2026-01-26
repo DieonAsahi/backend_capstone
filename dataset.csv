@@ -1,0 +1,51 @@
+id,pertanyaan,jawaban,kategori
+1,Outfit apa yang cocok untuk ke kampus?,"Outfit ke kampus yang nyaman adalah kaos polos atau kemeja santai dipadukan dengan jeans dan sneakers.",kampus
+2,Baju apa yang cocok dipakai kuliah?,"Gunakan pakaian sederhana seperti kaos atau blouse dengan celana jeans agar tetap nyaman.",kampus
+3,Outfit kuliah biar kelihatan rapi?,"Kemeja lengan pendek dengan celana chino dan sepatu casual bisa membuat tampilan rapi.",kampus
+4,Outfit kampus wanita?,"Blouse sederhana dengan cardigan dan celana bahan sangat cocok untuk ke kampus.",kampus
+5,Outfit kampus pria?,"Kaos polos, jaket ringan, celana jeans, dan sneakers cocok untuk pria.",kampus
+6,Outfit yang cocok untuk kerja kantoran?,"Kemeja formal atau blouse dipadukan dengan celana bahan dan sepatu pantofel.",kantor
+7,Baju kerja yang nyaman?,"Gunakan pakaian berbahan ringan seperti katun agar tetap nyaman seharian.",kantor
+8,Outfit kantor semi formal?,"Kemeja tanpa dasi dengan celana chino cocok untuk suasana semi formal.",kantor
+9,Outfit kantor wanita?,"Blouse polos, rok span atau celana bahan, dan sepatu heels rendah.",kantor
+10,Outfit kantor pria?,"Kemeja rapi dengan celana bahan dan sepatu pantofel.",kantor
+11,Outfit santai sehari-hari?,"Kaos oversized dengan celana jeans atau jogger sangat nyaman.",casual
+12,Baju untuk aktivitas harian?,"Gunakan pakaian kasual seperti kaos dan celana santai.",casual
+13,Outfit simpel tapi keren?,"Kaos polos dengan warna netral dan sneakers putih.",casual
+14,Outfit minimalis harian?,"Gunakan warna hitam, putih, atau abu-abu dengan potongan sederhana.",casual
+15,Outfit casual wanita?,"Blouse santai dengan jeans dan sepatu flat.",casual
+16,Outfit yang cocok untuk hangout?,"Kaos oversized, jaket denim, dan sneakers cocok untuk hangout.",hangout
+17,Baju untuk nongkrong sore?,"Kaos santai dengan celana jeans dan sepatu sneakers.",hangout
+18,Outfit nongkrong malam?,"Jaket bomber dengan kaos gelap dan celana jeans.",hangout
+19,Outfit hangout pria?,"Kaos hitam, jaket casual, dan sneakers.",hangout
+20,Outfit hangout wanita?,"Blouse santai dengan outer tipis dan sepatu sneakers.",hangout
+21,Outfit untuk acara formal?,"Setelan jas atau dress formal adalah pilihan terbaik.",formal
+22,Baju untuk kondangan?,"Batik atau dress elegan cocok untuk acara kondangan.",formal
+23,Outfit formal pria?,"Jas dengan kemeja dan sepatu pantofel.",formal
+24,Outfit formal wanita?,"Dress panjang atau kebaya modern.",formal
+25,Outfit acara resmi?,"Gunakan pakaian rapi dan elegan sesuai dress code.",formal
+26,Outfit untuk cuaca panas?,"Kaos katun tipis dan celana pendek atau linen.",cuaca
+27,Baju yang adem dipakai?,"Pilih bahan katun atau linen agar tidak gerah.",cuaca
+28,Outfit cuaca dingin?,"Gunakan sweater, hoodie, atau jaket tebal.",cuaca
+29,Baju saat hujan?,"Gunakan jaket waterproof dan sepatu tertutup.",cuaca
+30,Outfit musim hujan?,"Pilih pakaian cepat kering dan jaket pelindung air.",cuaca
+31,Outfit badan kurus?,"Gunakan layering atau pakaian oversized agar terlihat berisi.",bentuk_tubuh
+32,Baju untuk tubuh kurus?,"Hindari pakaian terlalu ketat.",bentuk_tubuh
+33,Outfit badan gemuk?,"Pilih warna gelap dan potongan lurus.",bentuk_tubuh
+34,Baju untuk tubuh berisi?,"Gunakan pakaian yang tidak terlalu ketat.",bentuk_tubuh
+35,Outfit agar terlihat tinggi?,"Gunakan celana high waist dan warna senada.",bentuk_tubuh
+36,Outfit pria casual?,"Kaos polos, jeans, dan sneakers adalah pilihan aman.",gender
+37,Outfit wanita casual?,"Blouse santai dan jeans dengan sepatu flat.",gender
+38,Baju pria simple?,"Kaos polos dan celana chino.",gender
+39,Baju wanita simple?,"Dress polos atau blouse minimalis.",gender
+40,Outfit unisex?,"Hoodie oversized dan sneakers cocok untuk semua gender.",gender
+41,Outfit traveling?,"Gunakan pakaian ringan dan sepatu yang nyaman.",travel
+42,Baju untuk jalan jauh?,"Kaos nyaman, jaket tipis, dan sneakers.",travel
+43,Outfit liburan?,"Gunakan pakaian santai dengan warna cerah.",travel
+44,Outfit ke pantai?,"Kaos tipis, celana pendek, dan sandal.",travel
+45,Outfit ke gunung?,"Jaket outdoor dan sepatu tracking.",travel
+46,Outfit OOTD?,"Gunakan warna senada dan aksesoris pendukung.",ootd
+47,Baju buat foto Instagram?,"Outfit aesthetic dengan warna pastel.",ootd
+48,Outfit foto mirror?,"Pakaian simpel dengan pencahayaan bagus.",ootd
+49,Outfit aesthetic?,"Gunakan gaya vintage atau clean look.",ootd
+50,Outfit street style?,"Hoodie, cargo pants, dan sneakers.",ootd
