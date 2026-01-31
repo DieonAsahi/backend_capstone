@@ -13,6 +13,7 @@ import fal_client
 import pickle
 import logging
 import google.generativeai as genai
+from sentiment_utils import SentimentAnalyzer
 from config import Config # Import class Config
 from datetime import datetime
 from dotenv import load_dotenv
@@ -92,6 +93,18 @@ except Exception as e:
 
 # --- Inisialisasi Aplikasi Flask ---
 app = Flask(__name__, static_folder='static', template_folder='templates')
+
+@app.after_request
+def add_cors_headers(response):
+    # Header utama untuk melewati halaman peringatan ngrok
+    response.headers['ngrok-skip-browser-warning'] = 'true'
+    
+    # Header pendukung agar aset Live2D bisa dimuat (CORS)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = '*'
+    return response
+
 app.config.from_object(Config) # Load semua config sekaligus
 CORS(app)
 
@@ -549,6 +562,28 @@ def wardrobe_item():
         row = cur.fetchone()
         cur.close()
 
+        # Validasi format string base64
+        if not image_data_url or "," not in image_data_url:
+            return jsonify(error="Format gambar tidak valid"), 400
+
+        header, encoded = image_data_url.split(",", 1)
+        
+        # --- FIX PADDING OTOMATIS ---
+        missing_padding = len(encoded) % 4
+        if missing_padding:
+            encoded += '=' * (4 - missing_padding)
+        
+        try:
+            image_data = base64.b64decode(encoded)
+        except Exception as e:
+            return jsonify(error=f"Gagal dekode Base64: {str(e)}"), 400
+
+        nparr = np.frombuffer(image_data, np.uint8)
+        img_cv = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        if img_cv is None:
+            return jsonify(error="Gambar tidak ditemukan"), 400
+        
         if not row or not row['gender']:
             return jsonify(error="isi gender kamu ya"), 400
 
@@ -1034,13 +1069,25 @@ def final_recommendation():
     data = request.get_json()
     user_id = data.get("user_id")
     style = data.get("style", "casual").lower()
-    gender = data.get("gender", "pria").lower()
     source = data.get("source", "lemari")
+    
+    # Ambil gender dari request Flutter
+    raw_gender = data.get("gender", "pria").lower()
 
-    if not user_id: return jsonify(success=False, message="User ID error"), 400
+    if not user_id: 
+        return jsonify(success=False, message="User ID error"), 400
+    
+    # --- FIX 1: Mapping Gender harus dilakukan DI AWAL sebelum loop ---
+    if raw_gender == 'pria':
+        db_gender = 'male'
+    elif raw_gender == 'wanita':
+        db_gender = 'female'
+    else:
+        db_gender = 'unisex'
 
     cur = mysql.connection.cursor()
     try:
+        # Ambil data profil user
         cur.execute("SELECT skin_tone_id, body_shape_id FROM users WHERE user_id=%s", [user_id])
         user_row = cur.fetchone()
         
@@ -1051,28 +1098,37 @@ def final_recommendation():
         skin_tone_id = user_row['skin_tone_id']
         body_shape_id = user_row['body_shape_id']
         
-        gender_combos = OUTFIT_COMBINATIONS.get(gender, {})
+        # Tentukan kombinasi pakaian berdasarkan raw_gender (pria/wanita)
+        gender_combos = OUTFIT_COMBINATIONS.get(raw_gender, {})
         style_combos = gender_combos.get(style, [["tshirt", "pants"]])
+        
         combos, weights = get_apriori_weights(user_id, style_combos)
         chosen_structure = random.choices(combos, weights=weights, k=1)[0]
         
-        if 'dress' in chosen_structure: chosen_structure = ['dress']
+        if 'dress' in chosen_structure: 
+            chosen_structure = ['dress']
 
         final_recommendations = []
         total_ml_score = 0
 
+        # --- FIX 2: Loop Pencarian Item dengan Query yang Benar ---
         for category_keyword in chosen_structure:
             if source == 'online':
+                # Query ini menggunakan category_text (Formal/Casual/Sport) dan db_gender
                 query = """
                     SELECT oc.catalog_item_id as item_id, oc.item_name, oc.image_url, 
-                           oc.category_id, oc.color_id, c_child.category_name as fitting_name
+                           oc.category_id, oc.color_id, c_child.category_name as fitting_name,
+                           oc.purchase_link, oc.category_text
                     FROM online_catalog oc
                     LEFT JOIN categories c_child ON oc.category_id = c_child.category_id
                     LEFT JOIN categories c_parent ON c_child.parent_category_id = c_parent.category_id
-                    WHERE LOWER(oc.style)=%s AND (LOWER(c_parent.category_name)=%s OR LOWER(c_child.category_name)=%s)
+                    WHERE LOWER(oc.category_text) = %s 
+                    AND (oc.gender = %s OR oc.gender = 'unisex')
+                    AND (LOWER(c_parent.category_name) = %s OR LOWER(c_child.category_name) = %s)
                 """
-                params = [style, category_keyword, category_keyword]
+                params = [style, db_gender, category_keyword, category_keyword]
             else:
+                # Query untuk Lemari Pribadi
                 query = """
                     SELECT uw.item_id, uw.item_name, uw.image_url, uw.category_id, uw.color_id,
                            c_child.category_name as fitting_name
@@ -1086,32 +1142,26 @@ def final_recommendation():
 
             cur.execute(query, params)
             items = cur.fetchall()
-            if not items: continue
+            if not items: 
+                continue
 
             scored_items = []
             for item in items:
+                # Hitung skor kecocokan (ML)
+                match_score = 70 # Default
                 if fashion_model:
                     try:
                         f_name = item['fitting_name'] if item['fitting_name'] else "Fit"
-                        fit_encoded = fit_encoder.transform([f_name])[0]
-                        
-                        features = [[skin_tone_id, body_shape_id, item['color_id'], fit_encoded, item['category_id']]]
-                        
+                        f_encoded = fit_encoder.transform([f_name])[0]
+                        features = [[skin_tone_id, body_shape_id, item['color_id'], f_encoded, item['category_id']]]
                         prob = fashion_model.predict_proba(features)[0][1]
                         match_score = int(prob * 100)
                     except:
-                        match_score = 70 
-                else:
-                    match_score = 70
+                        pass
 
-                cur.execute("SELECT notes FROM recommendation_rules WHERE skin_tone_id=%s AND color_id=%s LIMIT 1", 
-                            (skin_tone_id, item['color_id']))
-                rule_note = cur.fetchone()
-                
                 scored_items.append({
                     **item, 
-                    "match_score": match_score,
-                    "notes": rule_note['notes'] if rule_note else "Warna ini sangat stabil untuk gayamu."
+                    "match_score": match_score
                 })
 
             if scored_items:
@@ -1126,7 +1176,7 @@ def final_recommendation():
             "success": True, 
             "recommendations": final_recommendations, 
             "total_match_score": avg_score, 
-            "summary": f"Berdasarkan analisis mao, outfit ini {avg_score}% cocok dengan profil tubuh dan warna kulitmu.", 
+            "summary": f"Berdasarkan analisis Mao, outfit ini {avg_score}% cocok dengan profil tubuh dan warna kulitmu.", 
             "structure": chosen_structure
         })
         
@@ -1134,7 +1184,7 @@ def final_recommendation():
         if cur: cur.close()
         print(f"Error Recommendation: {e}")
         return jsonify(success=False, message=str(e)), 500
-            
+                    
 @app.route("/api/outfit/save", methods=["POST"])
 def save_outfit():
     data = request.get_json()
@@ -2083,7 +2133,7 @@ def api_products_crud():
                     if file.filename != '':
                         filename = str(int(time.time())) + "_" + file.filename
                         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                        image_url = f"http://{request.host}/static/uploads/{filename}"
+                        image_url = f"static/uploads/{filename}"
 
                 if action == 'create':
                     cursor.execute("""
@@ -2340,6 +2390,51 @@ def delete_shared_outfit(id):
     conn.commit()
     
     return jsonify({"status": True, "message": "Postingan dihapus"})
+
+@app.route('/admin/sentiment-analysis')
+def admin_sentiment_analysis():
+    if 'admin_logged_in' not in session: return redirect(url_for('admin_login'))
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # 1. Ambil Feedback
+    cursor.execute("""
+        SELECT f.*, u.username 
+        FROM feedback f 
+        JOIN users u ON f.user_id = u.user_id 
+        ORDER BY f.created_at DESC
+    """)
+    feedbacks = cursor.fetchall()
+
+    # 2. Inisialisasi Model
+    analyzer = SentimentAnalyzer(csv_path='Lemon8_clean.csv')
+    
+    # 3. Latih Model
+    analyzer.train() 
+
+    # --- BAGIAN 4: INI YANG SERING TERLEWAT ---
+    stats = {'positif': 0, 'netral': 0, 'negatif': 0}
+    
+    if feedbacks:
+        # A. Ambil pesan text dari database
+        messages = [f['message'] for f in feedbacks]
+        
+        # B. Lakukan Prediksi AI
+        predictions = analyzer.predict(messages)
+        
+        # C. Masukkan hasil prediksi ke dalam data feedback
+        for i, f in enumerate(feedbacks):
+            # Pastikan huruf kecil (positif, netral, negatif)
+            pred_label = predictions[i].lower()
+            f['sentiment_pred'] = pred_label  # <--- Kunci agar tidak muncul tanda tanya
+            
+            # Hitung statistik untuk diagram
+            if pred_label in stats:
+                stats[pred_label] += 1
+    # ------------------------------------------
+
+    return render_template('sentiment_analysis.html', feedbacks=feedbacks, stats=stats)
 
 if __name__ == "__main__":
     print("\n✅ Server Berjalan! Siap menerima koneksi.")

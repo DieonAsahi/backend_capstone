@@ -37,11 +37,11 @@
             autoStart: true,
             resizeTo: window,
             backgroundAlpha: 0,
-            antialias: false, // UBAH KE FALSE agar lebih ringan
-            preserveDrawingBuffer: false, // UBAH KE FALSE
-            resolution: 1 // PAKSA KE 1, jangan gunakan window.devicePixelRatio
-        });
-        async function init() {
+            antialias: false,        // Pastikan false
+            resolution: 1,           // Jangan gunakan window.devicePixelRatio
+            powerPreference: 'low-power', // Beritahu browser untuk tidak pakai GPU berat
+            hello: false             // Matikan log pixi
+        }); async function init() {
             try {
                 model = await PIXI.live2d.Live2DModel.from(MODEL_PATH);
                 app.stage.addChild(model);

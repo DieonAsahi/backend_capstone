@@ -20,7 +20,7 @@ def train_model():
 
     try:
         df = pd.read_csv(CSV_FILE, on_bad_lines="skip")
-        # Pastikan semua data dianggap teks
+        # Pastikan semua data diancggap teks
         df["pertanyaan"] = df["pertanyaan"].astype(str)
         df["jawaban"] = df["jawaban"].astype(str)
     except Exception as e:
